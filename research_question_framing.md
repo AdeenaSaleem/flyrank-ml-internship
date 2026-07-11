@@ -1,15 +1,11 @@
-# Research Question & Provisional Lane
+# Research Question & Confirmed Lane
 
-**Status:** Provisional — pending official lane-name confirmation (expected Week 2–3, per
-"ML Toolkit: Types of Models" session and Notebook 03). Lane choice can be confirmed or
-changed by end of Week 4, per ML-CAP-01.
+**Status:** Confirmed. Lane locked to CTR / Engagement Opportunity Scoring (official lane 4 of 4).
 
-## Provisional lane
+## Lane
 
-**CTR / Position Modeling** — closest fit among the four core Search Intelligence lanes
-based on available signals in the starter data and warehouse schema (position, impressions,
-clicks, CTR, content metadata). Will confirm exact lane name against the official list once
-published.
+**CTR / Engagement Opportunity Scoring** — official lane 4 of 4: "find visible pages that
+under-capture clicks or engagement and recommend metadata, content, or monitoring review."
 
 ## The question
 
