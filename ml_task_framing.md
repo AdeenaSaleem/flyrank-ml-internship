@@ -1,7 +1,7 @@
 # ML Task Framing
 
-**Lane (provisional):** CTR / Position Modeling — see `research_question_framing.md` (ML-02).
-Framing below will be re-checked once official lane names are confirmed (target: Week 4 lock).
+**Lane (confirmed):** CTR / Engagement Opportunity Scoring — official lane 4 of 4. See
+`research_question_framing.md` (ML-02) for the full question framing.
 
 ## Task type
 
