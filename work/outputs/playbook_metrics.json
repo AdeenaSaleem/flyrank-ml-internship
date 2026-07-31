@@ -1,0 +1,22 @@
+{
+  "total_pages_analyzed": 176568,
+  "archetype_distribution": {
+    "improve": 61481,
+    "low_priority": 51140,
+    "monitor_low_data": 33465,
+    "protect": 19147,
+    "refresh_candidate": 11335
+  },
+  "actionable_queue_size": 72816,
+  "clients_visible": 46,
+  "clients_total_in_warehouse": 104,
+  "position_tier_benchmarks": {
+    "1_top_3": 0.012409518575531757,
+    "2_page_1": 0.0049313607901543795,
+    "3_striking": 0.003210655906749217,
+    "4_page_3_5": 0.0022875044793737647,
+    "5_deep": 0.0009035049375955264
+  },
+  "cannibalization_risk_groups": 101,
+  "source_month": "2026-03"
+}
