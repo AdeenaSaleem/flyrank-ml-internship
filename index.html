@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Simple Rule Beat the Model — A CTR Opportunity Study on 176,568 Pages</title>
+<meta name="description" content="A CTR/engagement opportunity scoring study on real FlyRank search data: baseline, model, honest validation, and a ranked action playbook.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F8FA;
+    --surface:#FFFFFF;
+    --ink:#14182B;
+    --ink-soft:#4A5068;
+    --ink-faint:#8790A6;
+    --signal:#2C5FE8;
+    --signal-soft:#EAF0FF;
+    --opportunity:#E0932E;
+    --opportunity-soft:#FBF1E0;
+    --alert:#C2410C;
+    --line:#E1E4EC;
+    --mono-bg:#12162A;
+    --mono-ink:#DCE3FF;
+    --confirmed:#1F7A4D;
+    --mixed:#B7791F;
+    --radius:10px;
+    --measure:680px;
+    --measure-wide:920px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Public Sans', -apple-system, sans-serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', Georgia, serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:var(--signal);}
+  a:focus-visible, button:focus-visible, .nav-link:focus-visible{outline:2px solid var(--signal); outline-offset:3px;}
+
+  /* ---------- Layout shell ---------- */
+  .shell{display:grid; grid-template-columns:240px minmax(0,1fr); max-width:1280px; margin:0 auto;}
+  @media (max-width:960px){ .shell{grid-template-columns:1fr;} }
+
+  nav.toc{
+    position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+    padding:40px 20px 40px 32px; border-right:1px solid var(--line);
+  }
+  @media (max-width:960px){
+    nav.toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line);
+      padding:16px 20px; display:flex; gap:4px; overflow-x:auto; white-space:nowrap;}
+    nav.toc .toc-title, nav.toc .toc-eyebrow{display:none;}
+    nav.toc ul{display:flex; gap:4px; list-style:none; margin:0; padding:0;}
+  }
+  .toc-eyebrow{font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:6px;}
+  .toc-title{font-family:'Fraunces'; font-size:19px; font-weight:600; margin:0 0 28px; line-height:1.25;}
+  nav.toc ul{list-style:none; padding:0; margin:0;}
+  nav.toc li{margin:0;}
+  .nav-link{
+    display:block; padding:7px 10px; margin:1px 0; border-radius:7px;
+    color:var(--ink-soft); text-decoration:none; font-size:14px; font-weight:500;
+    border-left:2px solid transparent;
+  }
+  @media (max-width:960px){ .nav-link{border-left:none; border-bottom:2px solid transparent; padding:6px 12px;} }
+  .nav-link:hover{background:var(--signal-soft); color:var(--signal);}
+  .nav-link.active{color:var(--signal); background:var(--signal-soft); border-left-color:var(--signal); font-weight:600;}
+  .nav-num{font-family:'IBM Plex Mono'; font-size:11px; opacity:.65; margin-right:6px;}
+
+  main{padding:0 24px 120px;}
+  .measure{max-width:var(--measure); margin:0 auto;}
+  .measure-wide{max-width:var(--measure-wide); margin:0 auto;}
+
+  section{padding-top:76px; scroll-margin-top:24px;}
+  section:first-of-type{padding-top:0;}
+  .eyebrow{
+    font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--signal); margin:0 0 12px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:""; width:22px; height:1px; background:var(--signal); display:inline-block;}
+  h2{font-size:clamp(26px,3.4vw,34px); margin:0 0 22px; line-height:1.15;}
+  h3{font-size:19px; margin:32px 0 12px; font-weight:600;}
+  p{margin:0 0 18px; color:var(--ink);}
+  .lede{font-size:19px; color:var(--ink-soft); line-height:1.6;}
+  ul,ol{padding-left:22px;}
+  li{margin-bottom:8px;}
+  hr.rule{border:none; border-top:1px solid var(--line); margin:64px 0 0;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:88px 0 56px; border-bottom:1px solid var(--line); margin-bottom:8px;}
+  .hero .eyebrow{color:var(--opportunity);}
+  .hero .eyebrow::before{background:var(--opportunity);}
+  .hero h1{font-size:clamp(34px,5vw,54px); line-height:1.08; margin:0 0 26px; max-width:14ch;}
+  .hero .sub{font-size:20px; color:var(--ink-soft); max-width:60ch; margin:0 0 32px;}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:28px; font-family:'IBM Plex Mono'; font-size:13px; color:var(--ink-faint); padding-top:28px; border-top:1px solid var(--line);}
+  .hero-meta strong{color:var(--ink); display:block; font-size:15px; font-weight:600; margin-bottom:2px;}
+
+  /* ---------- Callouts / cards ---------- */
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px 28px; margin:24px 0;}
+  .stat-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:20px; margin:28px 0;}
+  .stat{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px;}
+  .stat .n{font-family:'Fraunces'; font-size:30px; font-weight:600; color:var(--signal); line-height:1;}
+  .stat .l{font-size:12.5px; color:var(--ink-faint); margin-top:6px; line-height:1.35;}
+
+  .callout{border-left:3px solid var(--signal); background:var(--signal-soft); padding:16px 20px; border-radius:0 8px 8px 0; margin:24px 0; font-size:15.5px;}
+  .callout.warn{border-left-color:var(--opportunity); background:var(--opportunity-soft);}
+  .callout strong{display:block; font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--opportunity); margin-bottom:6px;}
+  .callout.warn strong{color:var(--opportunity);}
+  .callout.blue strong{color:var(--signal);}
+
+  figure{margin:32px 0;}
+  figcaption{font-size:13.5px; color:var(--ink-faint); margin-top:12px; line-height:1.5;}
+  figcaption b{color:var(--ink-soft);}
+
+  /* ---------- Bar charts (CSS-based, real data) ---------- */
+  .barchart{display:flex; flex-direction:column; gap:10px; margin:20px 0;}
+  .barrow{display:grid; grid-template-columns:110px 1fr 78px; align-items:center; gap:12px;}
+  .barlabel{font-size:13px; color:var(--ink-soft); font-family:'IBM Plex Mono';}
+  .bartrack{background:var(--line); border-radius:5px; height:22px; overflow:hidden; position:relative;}
+  .barfill{height:100%; border-radius:5px; background:var(--signal);}
+  .barfill.gold{background:var(--opportunity);}
+  .barval{font-family:'IBM Plex Mono'; font-size:13px; color:var(--ink); text-align:right;}
+
+  /* ---------- Leakage signature moment ---------- */
+  .signature{
+    background:var(--mono-bg); color:var(--mono-ink); border-radius:16px; padding:44px 40px; margin:36px 0;
+  }
+  .signature .eyebrow{color:#8FA6FF;}
+  .signature .eyebrow::before{background:#8FA6FF;}
+  .signature h3{color:#fff; margin-top:0; font-size:20px;}
+  .sig-compare{display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:28px;}
+  @media (max-width:600px){ .sig-compare{grid-template-columns:1fr;} }
+  .sig-block{text-align:left;}
+  .sig-block .tag{font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.1em; text-transform:uppercase; opacity:.7; margin-bottom:10px;}
+  .sig-bar-track{background:rgba(255,255,255,.12); border-radius:8px; height:120px; display:flex; align-items:flex-end; overflow:hidden; margin-bottom:14px;}
+  .sig-bar-fill{width:100%; border-radius:8px 8px 0 0;}
+  .sig-block .n{font-family:'Fraunces'; font-size:38px; font-weight:600;}
+  .sig-block .d{font-size:13.5px; opacity:.75; margin-top:4px;}
+  .sig-block.honest .sig-bar-fill{background:#3D4468;}
+  .sig-block.honest .n{color:#B9C2E8;}
+  .sig-block.leaky .sig-bar-fill{background:linear-gradient(180deg,#FF8A5C,#E0932E);}
+  .sig-block.leaky .n{color:#FFB07C;}
+  .signature .note{margin-top:22px; font-size:14.5px; opacity:.85; border-top:1px solid rgba(255,255,255,.15); padding-top:18px;}
+
+  /* ---------- verdict pills ---------- */
+  .pill{display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono'; font-size:12px; font-weight:600; letter-spacing:.04em; padding:4px 11px; border-radius:20px;}
+  .pill.confirmed{background:#E5F4EC; color:var(--confirmed);}
+  .pill.mixed{background:#FBF1DA; color:var(--mixed);}
+  .pill::before{content:"●"; font-size:8px;}
+
+  /* ---------- table ---------- */
+  table{width:100%; border-collapse:collapse; margin:22px 0; font-size:14.5px;}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line);}
+  th{font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-weight:600;}
+  td.num, th.num{font-family:'IBM Plex Mono'; text-align:right;}
+  tr.highlight td{background:var(--signal-soft); font-weight:600;}
+  tr.highlight td:first-child{border-radius:8px 0 0 8px;}
+  tr.highlight td:last-child{border-radius:0 8px 8px 0;}
+
+  /* ---------- archetype grid ---------- */
+  .archetype-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; margin:26px 0;}
+  .archetype{border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; background:var(--surface);}
+  .archetype .swatch{width:28px; height:6px; border-radius:4px; margin-bottom:12px;}
+  .archetype h4{margin:0 0 6px; font-family:'Fraunces'; font-size:17px; font-weight:600;}
+  .archetype .count{font-family:'IBM Plex Mono'; font-size:22px; font-weight:600; color:var(--ink); margin:8px 0 6px;}
+  .archetype p{font-size:13.5px; color:var(--ink-soft); margin:0;}
+
+  /* ---------- action queue mini-table ---------- */
+  .queue-item{display:grid; grid-template-columns:32px 1fr auto; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--line);}
+  .queue-item:first-child{padding-top:0;}
+  .rank-badge{width:30px; height:30px; border-radius:50%; background:var(--signal-soft); color:var(--signal); font-family:'IBM Plex Mono'; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center;}
+  .queue-main .tier{font-family:'IBM Plex Mono'; font-size:12px; color:var(--ink-faint);}
+  .queue-main .action{font-size:14.5px; font-weight:600; margin-top:2px;}
+  .queue-score{font-family:'IBM Plex Mono'; font-size:13px; color:var(--ink-soft); text-align:right;}
+  .queue-score .l{font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em;}
+
+  footer{border-top:1px solid var(--line); padding:56px 0 90px;}
+  .credit-box{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;}
+  .credit-box a{font-weight:600;}
+
+  .repro-list{list-style:none; padding:0; margin:20px 0;}
+  .repro-list li{border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; background:var(--surface);}
+  .repro-list .fname{font-family:'IBM Plex Mono'; font-size:13.5px;}
+  .repro-list .fdesc{font-size:13px; color:var(--ink-faint);}
+
+  .fade-in{opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .5s ease;}
+  .fade-in.visible{opacity:1; transform:none;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="toc" aria-label="Paper sections">
+    <div class="toc-eyebrow">On this page</div>
+    <div class="toc-title">CTR Opportunity<br>Scoring Study</div>
+    <ul>
+      <li><a class="nav-link" href="#abstract"><span class="nav-num">00</span>Abstract</a></li>
+      <li><a class="nav-link" href="#intro"><span class="nav-num">01</span>Introduction</a></li>
+      <li><a class="nav-link" href="#data"><span class="nav-num">02</span>Data</a></li>
+      <li><a class="nav-link" href="#methodology"><span class="nav-num">03</span>Methodology</a></li>
+      <li><a class="nav-link" href="#results"><span class="nav-num">04</span>Results</a></li>
+      <li><a class="nav-link" href="#limitations"><span class="nav-num">05</span>Limitations</a></li>
+      <li><a class="nav-link" href="#recommendations"><span class="nav-num">06</span>Recommendations</a></li>
+      <li><a class="nav-link" href="#reproducibility"><span class="nav-num">07</span>Reproducibility</a></li>
+      <li><a class="nav-link" href="#credit"><span class="nav-num">08</span>Data credit</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div class="measure-wide">
+        <div class="eyebrow">Search Intelligence Capstone · CTR / Engagement Opportunity Scoring</div>
+        <h1>The simple rule beat the trained model.</h1>
+        <p class="sub">A position-tier lookup table outranked a Random Forest on 176,568 real pages from FlyRank's search warehouse — and figuring out why turned out to be the actual finding.</p>
+        <div class="hero-meta">
+          <div><strong>Adeena Saleem</strong>Machine Learning Engineering Intern, FlyRank AI</div>
+          <div><strong>176,568</strong>content items analyzed</div>
+          <div><strong>March 2026</strong>analysis window</div>
+          <div><strong>46 of 104</strong>clients represented</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="measure">
+
+      <section id="abstract">
+        <p class="eyebrow">00 — Abstract</p>
+        <p class="lede">Which already-ranking pages under-earn clicks for their position, and what should a content team fix first? Using FlyRank's 79-million-row search warehouse, I built a position-tier CTR baseline and compared it against a Random Forest trained on position, content, and keyword features, validated with a client-grouped split to prevent leakage. The Random Forest showed an 8.8% lower prediction error than the baseline — but a <em>weaker</em> rank correlation (0.057 vs. 0.166), which matters more here since the actual deliverable is a ranked list, not a point estimate. The honest conclusion: on this data, added features do not yet outrank the simple lookup table. The baseline logic was carried forward into a five-archetype action playbook (72,816 actionable pages), with every threshold and limitation checked against real query output rather than assumed.</p>
+      </section>
+
+      <hr class="rule">
+
+      <section id="intro">
+        <p class="eyebrow">01 — Introduction</p>
+        <h2>The decision this supports</h2>
+        <p>Content that ranks well in search doesn't automatically get clicked. A page sitting in position 3 can still under-perform its peers — a weak title, a mismatched meta description, or thin content can all suppress click-through rate (CTR) even when ranking is otherwise healthy. For a content team managing thousands of pages, the question isn't <em>"is CTR a problem somewhere"</em> — it's <em>"which specific pages, out of thousands, are worth an editor's time this week?"</em></p>
+        <p>That's the decision this project supports: a content or SEO lead deciding where to spend limited editing hours, backed by a ranked, reasoned list rather than a gut-feel scan of a spreadsheet.</p>
+        <div class="callout blue">
+          <strong>Why this isn't just "train a model"</strong>
+          The hard part was never fitting a regressor — it was building an honest baseline to beat, validating without leaking client identity across train/test, and translating a score into a recommendation a human could act on and refuse to automate blindly. Each of those steps changed the final answer.
+        </div>
+      </section>
+
+      <hr class="rule">
+
+      <section id="data">
+        <p class="eyebrow">02 — Data</p>
+        <h2>What went in, on purpose — and what didn't</h2>
+        <p>All analysis uses FlyRank's <span class="mono">internship-warehouse</span> release on Hugging Face: <span class="mono">fact_content_daily_performance</span> (78.8M rows, report_date × client × content) joined to <span class="mono">dim_content</span> (519,606 rows, one per content item), filtered to <strong>March 2026</strong> — a mid-panel month, not the sealed final month reserved as an untouched test period.</p>
+
+        <div class="stat-row">
+          <div class="stat"><div class="n">9.84M</div><div class="l">daily rows in the March window before filtering</div></div>
+          <div class="stat"><div class="n">176,568</div><div class="l">content items after grain + availability filters</div></div>
+          <div class="stat"><div class="n">46 / 104</div><div class="l">clients with usable March GSC data</div></div>
+          <div class="stat"><div class="n">36.7%</div><div class="l">of rows had gsc_data_available = TRUE</div></div>
+        </div>
+
+        <h3>Unit of analysis</h3>
+        <p>One row = one content item belonging to one client, with organic search performance summed over March 2026. Grain was verified, not assumed: a <span class="mono">GROUP BY report_date, client, content HAVING COUNT(*) &gt; 1</span> probe returned zero violating rows before any feature was built.</p>
+
+        <h3>Deliberately excluded</h3>
+        <ul>
+          <li><strong>Raw query text and the query-level table</strong> (<span class="mono">fact_content_query_90d</span>) — its 90-day rolling window doesn't align cleanly with a single calendar month and risks the label period leaking into the feature period.</li>
+          <li><strong>Client and content identifiers</strong> — used only as hashed pseudonyms for grouping and joining, never as model features, never resolved back to a real name, brand, or URL.</li>
+          <li><strong><span class="mono">content_updated_date</span> as a "days since update" feature</strong> — a check during data-contract work found 84% of March rows had this field dated <em>after</em> March, meaning it reflects a current snapshot timestamp, not month-specific history. Using it would have been an accidental future-information leak.</li>
+        </ul>
+
+        <div class="callout warn">
+          <strong>A limitation worth stating plainly</strong>
+          58 of 104 clients — the majority — have no usable March GSC data and are invisible to every result in this paper. Nothing here describes those clients, and no finding should be assumed to transfer to them.
+        </div>
+      </section>
+
+      <hr class="rule">
+
+      <section id="methodology">
+        <p class="eyebrow">03 — Methodology</p>
+        <h2>Baseline first, model second, leakage hunted before either was trusted</h2>
+
+        <h3>The baseline: a benchmark you can read in one sentence</h3>
+        <p>CTR is well known to fall off with search position. Rather than assume that shape, I measured it directly on this data — a page's benchmark CTR is the mean observed CTR of all pages sharing its position tier.</p>
+
+        <figure>
+          <div class="barchart">
+            <div class="barrow"><span class="barlabel">Top 3</span><div class="bartrack"><div class="barfill" style="width:100%"></div></div><span class="barval">1.241%</span></div>
+            <div class="barrow"><span class="barlabel">Page 1</span><div class="bartrack"><div class="barfill" style="width:39.7%"></div></div><span class="barval">0.493%</span></div>
+            <div class="barrow"><span class="barlabel">Striking</span><div class="bartrack"><div class="barfill" style="width:25.9%"></div></div><span class="barval">0.321%</span></div>
+            <div class="barrow"><span class="barlabel">Page 3–5</span><div class="bartrack"><div class="barfill" style="width:18.4%"></div></div><span class="barval">0.229%</span></div>
+            <div class="barrow"><span class="barlabel">Deep</span><div class="bartrack"><div class="barfill" style="width:7.3%"></div></div><span class="barval">0.090%</span></div>
+          </div>
+          <figcaption><b>Figure 1.</b> Mean observed CTR by position tier, March 2026 (n = 17,560 / 81,856 / 32,195 / 33,281 / 11,676, smallest group well above a 50-row floor). CTR falls monotonically from top-3 to deep positions — <span class="pill confirmed">confirmed</span> as a reliable, flag-linked signal.</figcaption>
+        </figure>
+
+        <p>A second candidate signal — content age — was tested the same way and did <em>not</em> hold up: CTR by age tier moved 0.38% → 0.29% → <strong>0.63%</strong> → 0.30%, with the 180–365 day tier posting nearly double the CTR of the newest content. That's <span class="pill mixed">mixed</span>, not confirmed — age alone was excluded as a standalone rule input.</p>
+
+        <h3>The leakage trap</h3>
+        <p>Before trusting any model, I deliberately added one label-derived column to a toy regression and watched what happened:</p>
+
+        <div class="signature">
+          <p class="eyebrow">Deliberate leakage test</p>
+          <h3>What happens when a feature secretly <em>is</em> the answer</h3>
+          <div class="sig-compare">
+            <div class="sig-block honest">
+              <div class="tag">Honest model</div>
+              <div class="sig-bar-track"><div class="sig-bar-fill" style="height:2%"></div></div>
+              <div class="n">R² = 0.002</div>
+              <div class="d">avg_position as the only feature</div>
+            </div>
+            <div class="sig-block leaky">
+              <div class="tag">Leaky model</div>
+              <div class="sig-bar-track"><div class="sig-bar-fill" style="height:100%"></div></div>
+              <div class="n">R² = 1.000</div>
+              <div class="d">+ ctr_observed, secretly renamed</div>
+            </div>
+          </div>
+          <p class="note">The "leaky" feature was CTR itself under a different column name. A model handed both the question and the answer scores perfectly by lookup, not by learning anything — the textbook shape of a leakage bug, reproduced deliberately here so it could be recognized and ruled out everywhere else in this project.</p>
+        </div>
+
+        <h3>The model, and how it was validated</h3>
+        <p>A Random Forest Regressor was trained on five features — <span class="mono">avg_position</span>, <span class="mono">word_count</span>, <span class="mono">search_volume</span>, <span class="mono">competition</span>, <span class="mono">age_days</span> — plus one-hot encoded <span class="mono">content_type</span>, predicting observed CTR. Validation used <strong>5-fold GroupKFold grouped by client</strong>, not a random split: pages from the same client can share hidden site-level traits, and a random split would let the model partly memorize a client's baseline CTR rather than learn transferable feature relationships. Zero client overlap between train and test was confirmed in every fold before any metric was trusted.</p>
+
+        <p>A before/after check compared this grouped split against a naive random split. The result was genuinely mixed — random split showed a <em>worse</em> MAE (0.00864) but a <em>better</em> R² (0.013 vs. −0.028) than the grouped split, stable across two random seeds. Higher R² under random splitting is the direction a leakage effect would produce, but MAE and rank correlation moved the opposite way — an ambiguous result, reported as such rather than forced into a tidier story.</p>
+      </section>
+
+      <hr class="rule">
+
+      <section id="results">
+        <p class="eyebrow">04 — Results</p>
+        <h2>The model won on error. The baseline won on rank — and rank is what matters here.</h2>
+
+        <table>
+          <thead><tr><th>Method</th><th class="num">MAE</th><th class="num">R²</th><th class="num">Spearman rank corr.</th></tr></thead>
+          <tbody>
+            <tr><td>Baseline — position-tier lookup</td><td class="num">0.008499</td><td class="num">−0.010</td><td class="num">0.166</td></tr>
+            <tr><td>Linear Regression</td><td class="num">0.008002</td><td class="num">−0.008</td><td class="num">0.073</td></tr>
+            <tr class="highlight"><td>Random Forest</td><td class="num">0.007749</td><td class="num">−0.022</td><td class="num">0.057</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:13.5px;color:var(--ink-faint);margin-top:-8px;">All metrics computed out-of-fold on the client-grouped split. Random Forest: 8.8% lower MAE than baseline; also the weakest ranking correlation of the three.</p>
+
+        <div class="callout">
+          <strong>Why the ranking metric outweighs the error metric here</strong>
+          This lane's actual output is a <em>ranked</em> action list, not a point prediction — what a content team needs is the order right, not the exact decimal. By Spearman correlation, the plain lookup table ranks pages more sensibly than either learned model. Given "don't reward complexity alone," the honest read is that neither model is a clear upgrade over the baseline for this task's real purpose, at this feature set and grain.
+        </div>
+
+        <h3>What the model actually leans on</h3>
+        <div class="barchart">
+          <div class="barrow"><span class="barlabel">word_count</span><div class="bartrack"><div class="barfill gold" style="width:100%"></div></div><span class="barval">51.0%</span></div>
+          <div class="barrow"><span class="barlabel">avg_position</span><div class="bartrack"><div class="barfill gold" style="width:42.9%"></div></div><span class="barval">21.9%</span></div>
+          <div class="barrow"><span class="barlabel">age_days</span><div class="bartrack"><div class="barfill gold" style="width:42.7%"></div></div><span class="barval">21.8%</span></div>
+          <div class="barrow"><span class="barlabel">competition</span><div class="bartrack"><div class="barfill gold" style="width:3.1%"></div></div><span class="barval">1.6%</span></div>
+          <div class="barrow"><span class="barlabel">search_volume</span><div class="bartrack"><div class="barfill gold" style="width:2.7%"></div></div><span class="barval">1.4%</span></div>
+        </div>
+        <figcaption style="margin-bottom:28px;"><b>Figure 2.</b> Random Forest feature importances. Three features carry ~95% of the model's weight; content_type contributes almost nothing.</figcaption>
+
+        <h3>Where the model is most wrong</h3>
+        <p>Error was investigated, not just reported. Prediction error climbs sharply at low impression counts: rows with ≤3 impressions carry a mean absolute error of <strong>0.0239</strong>, 4.5× the <strong>0.0053</strong> seen above that floor. Every one of the ten single-worst predictions shares one trait — exactly one impression, one click, a "perfect" 100% CTR the model correctly refused to trust. That's the model behaving sensibly around noise, not failing.</p>
+      </section>
+
+      <hr class="rule">
+
+      <section id="limitations">
+        <p class="eyebrow">05 — Limitations</p>
+        <h2>What this work cannot claim</h2>
+        <ul>
+          <li><strong>No causal claim, anywhere.</strong> Every recommendation here is a correlational, decision-support suggestion. Nothing in this paper claims a recommended change will move ranking or traffic, and nothing claims insight into how Google's ranking algorithm works.</li>
+          <li><strong>Single month, single snapshot.</strong> All figures come from March 2026 only. A page flagged this month could look different next month from ordinary variance alone.</li>
+          <li><strong>Majority of clients unrepresented.</strong> 58 of 104 clients (56%) have no usable March data and are absent from every number in this paper.</li>
+          <li><strong>A small, quantified survivorship gap.</strong> Filtering to currently-published, non-deleted content excludes 0.1% of March-active rows (3,770 of 3.61M) that were live in March but later removed or unpublished — real, but too small to distort the results above.</li>
+          <li><strong>Two of the FlyRank research paper's own findings deserve the same scrutiny applied here.</strong> Its content-age "lifecycle" curve compares different pages of different ages at one point in time (cross-sectional), not the same pages tracked over time — a cohort effect is an equally plausible explanation. Its refresh-multiplier finding (3.2× health boost) compares refreshed to un-refreshed pages, but refresh assignment is a choice, not random — part of that lift may reflect which pages get chosen, not the refresh itself.</li>
+        </ul>
+      </section>
+
+      <hr class="rule">
+
+      <section id="recommendations">
+        <p class="eyebrow">06 — Ranked recommendations</p>
+        <h2>A five-archetype action playbook, built on the baseline that actually ranks</h2>
+        <p>Since the baseline outranks the trained model (Section 04), the action playbook is built on baseline logic — a deliberate, evidence-based choice, extended into five archetypes instead of one flat flag.</p>
+
+        <div class="archetype-grid">
+          <div class="archetype"><div class="swatch" style="background:var(--ink-faint)"></div><h4>Protect</h4><div class="count">19,147</div><p>Good position, CTR at/above benchmark. Leave alone, monitor for decline.</p></div>
+          <div class="archetype"><div class="swatch" style="background:var(--signal)"></div><h4>Improve</h4><div class="count">61,481</div><p>Good position, CTR below benchmark, real volume. Title/meta review.</p></div>
+          <div class="archetype"><div class="swatch" style="background:var(--opportunity)"></div><h4>Refresh candidate</h4><div class="count">11,335</div><p>Weak position, 270+ days old. Content refresh, not just metadata.</p></div>
+          <div class="archetype"><div class="swatch" style="background:#B7BEDA"></div><h4>Monitor (low data)</h4><div class="count">33,465</div><p>Under 10 impressions. Too little signal to act on confidently yet.</p></div>
+          <div class="archetype"><div class="swatch" style="background:#D9DCE6"></div><h4>Low priority</h4><div class="count">51,140</div><p>Weak position, not old enough to flag. No action recommended.</p></div>
+        </div>
+
+        <h3>Top of the ranked queue</h3>
+        <div class="queue-item"><div class="rank-badge">1</div><div class="queue-main"><span class="tier">top_3 · 203,497 impr.</span><div class="action">Review title / meta</div></div><div class="queue-score">2,236<div class="l">opportunity score</div></div></div>
+        <div class="queue-item"><div class="rank-badge">2</div><div class="queue-main"><span class="tier">top_3 · 221,310 impr.</span><div class="action">Review title / meta</div></div><div class="queue-score">2,026<div class="l">opportunity score</div></div></div>
+        <div class="queue-item"><div class="rank-badge">3</div><div class="queue-main"><span class="tier">top_3 · 617,124 impr.</span><div class="action">Review title / meta</div></div><div class="queue-score">1,990<div class="l">opportunity score</div></div></div>
+        <p style="font-size:13.5px;color:var(--ink-faint); margin-top:16px;">Opportunity score = (benchmark CTR − observed CTR) × impressions — ranks by click volume at stake, not gap size alone. Full 72,816-row queue ships as a notebook export, not reproduced here.</p>
+
+        <div class="callout warn">
+          <strong>What should never be automated</strong>
+          Auto-publishing a rewrite, auto-deleting or merging pages, or treating opportunity_score itself as a KPI target. A human reviews query intent, SERP layout, and cross-page cannibalization before any change — one client alone had <strong>10,073</strong> pages flagged simultaneously in a single position tier, a scale where a client-level review beats 10,073 individual edits.
+        </div>
+
+        <h3>Monitoring &amp; retrain triggers</h3>
+        <p>Rebuild monthly. Flag a manual review if any position-tier benchmark drifts more than 20% month-over-month (concrete 2026-03 bounds: top_3 0.0099–0.0149, page_1 0.0039–0.0059, striking 0.0026–0.0039, page_3_5 0.0018–0.0027, deep 0.0007–0.0011), if the low-data archetype share jumps sharply (signals a tracking issue, not a real shift), or if client coverage changes meaningfully from the current 46-of-104.</p>
+      </section>
+
+      <hr class="rule">
+
+      <section id="reproducibility">
+        <p class="eyebrow">07 — Reproducibility</p>
+        <h2>Every number above traces back to a committed notebook</h2>
+        <ul class="repro-list">
+          <li><span class="fname">work/notebooks/w03_data_contract.ipynb</span><span class="fdesc">Grain check, leakage trap, data limitations</span></li>
+          <li><span class="fname">work/notebooks/w04_baseline_score.ipynb</span><span class="fdesc">Position-tier signal test, baseline rule, top-20 review</span></li>
+          <li><span class="fname">work/notebooks/w05_model.ipynb</span><span class="fdesc">GroupKFold split, model comparison, error analysis</span></li>
+          <li><span class="fname">work/notebooks/w06_validation_audit.ipynb</span><span class="fdesc">Paper critique, honest-split before/after, leakage audit</span></li>
+          <li><span class="fname">work/notebooks/w07_action_playbook.ipynb</span><span class="fdesc">Five-archetype logic, human-review rules, exports</span></li>
+        </ul>
+        <p>Full repository, including every skeleton, skill reference, and this page's source: <a href="https://github.com/AdeenaSaleem/flyrank-ml-internship" target="_blank" rel="noopener">github.com/AdeenaSaleem/flyrank-ml-internship</a></p>
+      </section>
+
+    </div>
+
+    <footer id="credit">
+      <div class="measure-wide">
+        <div class="credit-box">
+          <div>
+            <p class="eyebrow" style="margin-bottom:6px;">08 — Acknowledgments &amp; data credit</p>
+            <p style="margin:0; color:var(--ink-soft);">Built on the FlyRank ML Internship dataset.</p>
+          </div>
+          <a href="https://flyrank.ai" target="_blank" rel="noopener">flyrank.ai →</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Active nav highlight — respects prefers-reduced-motion via CSS above
+  const links = document.querySelectorAll('.nav-link');
+  const sections = Array.from(links).map(l => document.querySelector(l.getAttribute('href')));
+  const setActive = () => {
+    let idx = 0;
+    const y = window.scrollY + 120;
+    sections.forEach((s,i) => { if (s && s.offsetTop <= y) idx = i; });
+    links.forEach((l,i) => l.classList.toggle('active', i === idx));
+  };
+  window.addEventListener('scroll', setActive, {passive:true});
+  setActive();
+
+  // Gentle fade-in on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, {threshold:0.1});
+  document.querySelectorAll('section, .signature, .card').forEach(el => { el.classList.add('fade-in'); io.observe(el); });
+</script>
+</body>
+</html>
